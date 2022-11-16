@@ -7,7 +7,7 @@ The second step of our resequencing workflow deals with the identification of va
 As usual, we prepare our folders to keep the data in a tidy structure:
 
 ```{bash}
-cd /config/workspace/variant_calling
+cd /config/workspace/dati_vscode/variant_calling
 mkdir -p variants
 cd variants
 ```
@@ -21,8 +21,8 @@ We therefore do this for each sample, first on the *normal* one
 
 ```{bash}
 gatk --java-options "-Xmx4g" HaplotypeCaller  \
-   -R /config/workspace/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   -I /config/workspace/variant_calling/alignment/normal_recal.bam \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -I /config/workspace/dati_vscode/variant_calling/alignment/normal_recal.bam \
    -O normal.g.vcf.gz \
    -ERC GVCF
 ```
@@ -32,8 +32,8 @@ Then on the sample we have indicated as *disease* case.
 
 ```{bash}
 gatk --java-options "-Xmx4g" HaplotypeCaller  \
-   -R /config/workspace/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   -I /config/workspace/variant_calling/alignment/disease_recal.bam \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -I /config/workspace/dati_vscode/variant_calling/alignment/disease_recal.bam \
    -O disease.g.vcf.gz \
    -ERC GVCF
 ```
@@ -57,7 +57,7 @@ gatk --java-options "-Xmx4g -Xms4g" GenomicsDBImport \
     -V normal.g.vcf.gz \
     -V disease.g.vcf.gz \
     --genomicsdb-workspace-path compared_db \
-    --tmp-dir /config/workspace/variant_calling/variants/tmp \
+    --tmp-dir /config/workspace/dati_vscode/variant_calling/variants/tmp \
     -L chr21
 ```
 
@@ -69,9 +69,9 @@ We then use the generated database in order to call the samples together:
 
 ```{bash}
 gatk --java-options "-Xmx4g" GenotypeGVCFs \
-   -R /config/workspace/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -V gendb://compared_db \
-   --dbsnp /config/workspace/datasets_class/reference/gatkbundle/dbsnp_146.hg38_chr21.vcf.gz \
+   --dbsnp /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_146.hg38_chr21.vcf.gz \
    -O results.vcf.gz
 ```
 
