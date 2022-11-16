@@ -9,7 +9,7 @@ mkdir -p variant_calling
 cd variant_calling
 mkdir -p raw_data
 cd raw_data
-ln -s /config/workspace/dati_vscode/datasets_class/germline_calling/reads/*.gz .
+ln -s /config/workspace/dati_vscode/datasets_bsa-2022/germline_calling/reads/*.gz .
 cd ..
 mkdir -p alignment
 cd alignment
@@ -19,7 +19,7 @@ cd alignment
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:normal\tPL:illumina\tLB:sim" \
-/config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_1.000+disease_0.000_1.fq.gz \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_1.000+disease_0.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o normal.bam -
@@ -29,7 +29,7 @@ bwa mem \
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:disease\tPL:illumina\tLB:sim" \
-/config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_0.000+disease_1.000_1.fq.gz \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_0.000+disease_1.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o disease.bam -
@@ -63,29 +63,29 @@ gatk MarkDuplicates \
 
 gatk BaseRecalibrator \
    -I normal_md.bam \
-   -R /config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /config/workspace/dati_vscode/datasets_class/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /config/workspace/dati_vscode/datasets_class/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O normal_recal_data.table
 
 gatk BaseRecalibrator \
    -I disease_md.bam \
-   -R /config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /config/workspace/dati_vscode/datasets_class/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /config/workspace/dati_vscode/datasets_class/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O disease_recal_data.table
 
 
 #### Apply recalibration
 
 gatk ApplyBQSR \
-   -R /config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I normal_md.bam \
    --bqsr-recal-file normal_recal_data.table \
    -O normal_recal.bam
 
 gatk ApplyBQSR \
-   -R /config/workspace/dati_vscode/datasets_class/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I disease_md.bam \
    --bqsr-recal-file disease_recal_data.table \
    -O disease_recal.bam
