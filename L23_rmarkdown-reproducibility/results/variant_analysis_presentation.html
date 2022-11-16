@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Variant Analysis</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Francesco Lescai" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <script src="libs/kePrint/kePrint.js"></script>
+    <link href="libs/lightable/lightable.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Variant Analysis
+## <br/>normal and disease samples
+### Francesco Lescai
+### Dip. Biologia e Biotecnologie - UniPV
+### 2016/12/12 (updated: 2021-12-26)
+
+---
+
+
+
+
+
+
+
+
+---
+# Quality Control
+
+First important thing during an analysis is: check the quality of the raw data.
+We do this by using Biopython, and plotting the Phred quality of a sample of 5,000 reads from the original file.
+
+
+
+
+Once we do this in python, we can then manage the data we have extracted from within R. 
+The *py* object contains the objects generated within python.
+
+
+```
+## # A tibble: 6 × 3
+##   record basePos phredQual
+##   &lt;chr&gt;    &lt;dbl&gt;     &lt;dbl&gt;
+## 1 read_1       0        17
+## 2 read_1       1        17
+## 3 read_1       2        17
+## 4 read_1       3        15
+## 5 read_1       4        17
+## 6 read_1       5        18
+```
+
+---
+# Forward quality 
+
+Now we can plot the results from the forward reads.
+
+![](variant_analysis_presentation_files/figure-html/plotQualData-1.png)&lt;!-- --&gt;
+
+---
+
+# Variant Calling
+
+
+We import a VCF file by using the library **VariantAnnotation*.
+Inside this package, the function *readVcf* allows us to point to the VCF we want to import: we need to specify which genome version was used.
+
+
+
+
+Let's look at the structure: the VCF class has a few accessors which allow us to inspect different sections of the VCF file.
+
+The *rowRanges* accessor allows us to see the coordinates and alleles:
+
+
+```
+## GRanges object with 6 ranges and 5 metadata columns:
+##                      seqnames    ranges strand | paramRangeID            REF
+##                         &lt;Rle&gt; &lt;IRanges&gt;  &lt;Rle&gt; |     &lt;factor&gt; &lt;DNAStringSet&gt;
+##    chr21:6456942_G/A    chr21   6456942      * |           NA              G
+##    chr21:7819308_C/T    chr21   7819308      * |           NA              C
+##    chr21:7819461_G/A    chr21   7819461      * |           NA              G
+##   chr21:14162955_C/G    chr21  14162955      * |           NA              C
+##           rs61740029    chr21  14165268      * |           NA              A
+##          rs140307100    chr21  14964781      * |           NA              T
+##                                     ALT      QUAL      FILTER
+##                      &lt;DNAStringSetList&gt; &lt;numeric&gt; &lt;character&gt;
+##    chr21:6456942_G/A                  A    106.91           .
+##    chr21:7819308_C/T                  T     51.91           .
+##    chr21:7819461_G/A                  A     67.91           .
+##   chr21:14162955_C/G                  G     37.91           .
+##           rs61740029                  G    483.48           .
+##          rs140307100                  C    645.48           .
+##   -------
+##   seqinfo: 1 sequence from hg38 genome
+```
+
+---
+# Info section
+
+The *info* accessor allows us to see the annotations:
+
+
+```
+## DataFrame with 6 rows and 21 columns
+##                               AC            AF        AN BaseQRankSum        DB
+##                    &lt;IntegerList&gt; &lt;NumericList&gt; &lt;integer&gt;    &lt;numeric&gt; &lt;logical&gt;
+## chr21:6456942_G/A              1          0.25         4        5.250     FALSE
+## chr21:7819308_C/T              1          0.25         4        2.910     FALSE
+## chr21:7819461_G/A              1          0.25         4        1.630     FALSE
+## chr21:14162955_C/G             1          0.25         4        0.792     FALSE
+## rs61740029                     2           0.5         4           NA      TRUE
+## rs140307100                    2           0.5         4           NA      TRUE
+##                           DP       END ExcessHet        FS InbreedingCoeff
+##                    &lt;integer&gt; &lt;integer&gt; &lt;numeric&gt; &lt;numeric&gt;       &lt;numeric&gt;
+## chr21:6456942_G/A        137        NA    3.0103     3.550              NA
+## chr21:7819308_C/T        103        NA    3.0103     0.000              NA
+## chr21:7819461_G/A         71        NA    3.0103     7.911              NA
+## chr21:14162955_C/G        54        NA    3.0103     0.000              NA
+## rs61740029               106        NA    0.7918     0.000              NA
+## rs140307100               64        NA    0.7918     0.000              NA
+##                            MLEAC         MLEAF        MQ MQRankSum        QD
+##                    &lt;IntegerList&gt; &lt;NumericList&gt; &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;
+## chr21:6456942_G/A              1          0.25     29.98    -0.115      1.32
+## chr21:7819308_C/T              1          0.25     33.71    -1.335      1.13
+## chr21:7819461_G/A              1          0.25     30.57    -0.147      3.99
+## chr21:14162955_C/G             1          0.25     60.00     0.000      5.42
+## rs61740029                     2           0.5     60.00        NA     15.60
+## rs140307100                    2           0.5     60.00        NA     22.26
+##                      RAW_MQandDP ReadPosRankSum       SOR
+##                    &lt;IntegerList&gt;      &lt;numeric&gt; &lt;numeric&gt;
+## chr21:6456942_G/A          NA,NA          0.016     0.367
+## chr21:7819308_C/T          NA,NA         -1.004     0.884
+## chr21:7819461_G/A          NA,NA          2.010     0.515
+## chr21:14162955_C/G         NA,NA         -0.652     0.495
+## rs61740029                 NA,NA             NA     1.402
+## rs140307100                NA,NA             NA     1.255
+##                                                                                         ANN
+##                                                                             &lt;CharacterList&gt;
+## chr21:6456942_G/A  A|synonymous_variant..,A|synonymous_variant..,A|synonymous_variant..,...
+## chr21:7819308_C/T                             T|synonymous_variant..,T|synonymous_variant..
+## chr21:7819461_G/A                             A|synonymous_variant..,A|synonymous_variant..
+## chr21:14162955_C/G G|intron_variant|MOD..,G|intron_variant|MOD..,G|intron_variant|MOD..,...
+## rs61740029         G|missense_variant|M..,G|missense_variant|M..,G|missense_variant|M..,...
+## rs140307100                                                          C|missense_variant|M..
+##                                LOF             NMD
+##                    &lt;CharacterList&gt; &lt;CharacterList&gt;
+## chr21:6456942_G/A                                 
+## chr21:7819308_C/T                                 
+## chr21:7819461_G/A                                 
+## chr21:14162955_C/G                                
+## rs61740029                                        
+## rs140307100
+```
+
+---
+# Geno section
+
+and the *geno* accessor allows us to access the genotypes of the samples represented in the VCF file
+
+
+```
+## List of length 6
+## names(6): GT AD DP GQ MIN_DP PGT
+```
+
+---
+# Variant import
+
+To simplify our analyses we can create a tibble, which we need in order to plot or create tables.
+Using *lapply* and some functions provided by the teacher, we can unnest the annotations created by **snpEff** and simplify the structure of the data.
+
+
+
+
+
+---
+# mapping quality
+
+.pull-left[
+
+Now that we have a tibble, we can use it to plot some quality data, like the *mapping quality* of the variants:
+
+]
+
+.pull-right[
+
+![](variant_analysis_presentation_files/figure-html/mappingQuality-1.png)&lt;!-- --&gt;
+
+
+]
+
+
+---
+# depth of variants
+
+or the *depth* they have been sequenced at:
+
+![](variant_analysis_presentation_files/figure-html/depth-1.png)&lt;!-- --&gt;
+
+---
+# Variant consequences
+
+.pull-left[
+
+Naturally, an interesting thing is looking at the variant consequences once we have annotated the variants.
+
+A Pie Chart is in fact a Bar plot with polar coordinates: let's see how we can do it in R
+
+]
+
+.pull-right[
+
+![](variant_analysis_presentation_files/figure-html/consequences-1.png)&lt;!-- --&gt;
+
+
+]
+
+
+---
+# better pie
+
+There is a better way to plot this, and we can improve the plot as follows
+
+![](variant_analysis_presentation_files/figure-html/piechart-1.png)&lt;!-- --&gt;
+
+---
+# even better pie
+
+But the labels are still awfully overlapping and they are not readable.
+In different situations we can use **ggrepel** to avoid labels overlaps, like follows:
+
+
+![](variant_analysis_presentation_files/figure-html/piechartRepel-1.png)&lt;!-- --&gt;
+
+---
+# variant table
+
+In this case it does not help us very much, due to the nature of the data.
+Let's table the results instead:
+
+
+&lt;table&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; consequence &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; count &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; synonymous_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 469 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; missense_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 427 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; intron_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 25 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 7 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 4 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; splice_region_variant&amp;amp;synonymous_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; stop_gained &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 3 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; downstream_gene_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; missense_variant&amp;amp;splice_region_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; splice_region_variant&amp;amp;intron_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; upstream_gene_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 2 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; 3_prime_UTR_variant &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; conservative_inframe_deletion &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; disruptive_inframe_insertion &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 1 &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+# Disease candidates
+
+We can filter the VCF as we did on bash, but this time is going to be easier:
+
+
+
+
+
+Let's use this to table the result in a simple table:
+
+&lt;table class="table" style="font-size: 9px; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; seqnames &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; start &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; REF &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; ALT &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; gene &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; consequence &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 32576780 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; AC &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TCP10L &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 32631618 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; AGTATT &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; SYNJ1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 33576378 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; G &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; GA &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; SON &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 37472761 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; G &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; DYRK1A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 43741551 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; G &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; PDXK &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 44339194 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; T &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; C &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; CFAP410 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 44406660 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; C &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; T &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TRPM2 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; stop_gained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504485 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TTCGGCTCC &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; T &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504493 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; CA &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; C, &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504507 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; CCCCCGGCCCCCCAGGCCCCCCAGGCCCA &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; , C &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45989090 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; C &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; T &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL6A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; stop_gained &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+---
+# variant annotation
+
+Now, like we did in class, we want to use websites like *ClinVar* or *gnomAD* to add information to our table and present it: let's imagine we have checked on clinvar if the variant is pathogenic or not, and whether the gene is constrained for LoF variation on gnomad.
+
+The information below does not correspond to a real search result:
+
+
+
+---
+# annotated table
+
+Now we can table this information and present it in our report.
+We might want to select only some columns to improve the readability of the table:
+
+&lt;table class="table" style="font-size: 9px; margin-left: auto; margin-right: auto;"&gt;
+ &lt;thead&gt;
+  &lt;tr&gt;
+   &lt;th style="text-align:left;"&gt; seqnames &lt;/th&gt;
+   &lt;th style="text-align:right;"&gt; start &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; gene &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; consequence &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; clinvar &lt;/th&gt;
+   &lt;th style="text-align:left;"&gt; constrained &lt;/th&gt;
+  &lt;/tr&gt;
+ &lt;/thead&gt;
+&lt;tbody&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 32576780 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TCP10L &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 32631618 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; SYNJ1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 33576378 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; SON &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 37472761 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; DYRK1A &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 43741551 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; PDXK &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 44339194 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; CFAP410 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; start_lost &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 44406660 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; TRPM2 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; stop_gained &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504485 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504493 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; benign &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; not constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45504507 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL18A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; frameshift_variant &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; pathogenic &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; constrained &lt;/td&gt;
+  &lt;/tr&gt;
+  &lt;tr&gt;
+   &lt;td style="text-align:left;"&gt; chr21 &lt;/td&gt;
+   &lt;td style="text-align:right;"&gt; 45989090 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; COL6A1 &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; stop_gained &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; pathogenic &lt;/td&gt;
+   &lt;td style="text-align:left;"&gt; constrained &lt;/td&gt;
+  &lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

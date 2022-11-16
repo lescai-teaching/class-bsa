@@ -1,0 +1,261 @@
+---
+title: "Variant Analysis"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+```{r libraries, include=FALSE}
+library(knitr)
+library(VariantAnnotation)
+library(tidyverse)
+library(reticulate)
+setwd("~/data/markdown_exercise")
+use_python('/opt/software/bin/python')
+use_condaenv(condaenv = "base", conda = "/opt/software/bin/conda")
+source("extract_annotations.R")
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+```
+
+
+# Quality Control
+
+First important thing during an analysis is: check the quality of the raw data.
+We do this by using Biopython, and plotting the Phred quality of a sample of 5,000 reads from the original file.
+
+```{python, readSequences}
+from Bio import SeqIO
+import matplotlib as mpl
+mpl.use('Agg')
+import matplotlib.pyplot as pyplot
+import numpy as np
+import pandas as pd
+
+def seq_quality(reads):
+  data = SeqIO.parse( reads, 'fastq')
+  pList = []
+  phredList =[]
+  lengths = []
+  for record in data:
+    pArray = []
+    phredArray = []
+    qualities = record.letter_annotations["phred_quality"]
+    for Q in qualities:
+        # convert the PHRED score to a probability
+        p = 10**(-float(Q)/10)
+        # append this specific probabity to array for this sequence
+        pArray = pArray + [p] 
+        phredArray += [Q]
+    # now append the sequence's probablity to a list of all of them    
+    pList = pList + [pArray]
+    # also append the phred qualities as they are
+    phredList += [phredArray]
+    # store the length of the probability array (same as length of sequence)
+    lengths += [len(pArray)]
+  phredData = pd.DataFrame(phredList)
+  return(phredData)
+
+forwardQuality = seq_quality('/home/rstudio/data/markdown_exercise/reads/normal_sample_1.fq')
+reverseQuality = seq_quality('/home/rstudio/data/markdown_exercise/reads/normal_sample_2.fq')
+```
+
+
+Once we do this in python, we can then manage the data we have extracted from within R. 
+The *py* object contains the objects generated within python.
+
+```{r prepQualData}
+fwQualData = py$forwardQuality
+fwQualData$record = paste0("read_", 1:dim(fwQualData)[1])
+fwQualData = fwQualData %>%
+  pivot_longer(cols = c(1:105), names_to = "basePos", values_to = "phredQual")
+fwQualData$basePos = as.numeric(fwQualData$basePos)
+head(fwQualData)
+```
+
+Now we can plot the results from the forward reads.
+
+```{r plotQualData}
+ggplot(fwQualData, aes(x=basePos, y=phredQual))+
+  geom_smooth()
+```
+
+
+# Variant Calling
+
+## Characteristics of the variants
+
+We import a VCF file by using the library **VariantAnnotation*.
+Inside this package, the function *readVcf* allows us to point to the VCF we want to import: we need to specify which genome version was used.
+
+```{r importVcf}
+vcf <- readVcf("variants/results_ann.vcf", genome = "hg38")
+```
+
+
+Let's look at the structure: the VCF class has a few accessors which allow us to inspect different sections of the VCF file.
+
+The *rowRanges* accessor allows us to see the coordinates and alleles:
+
+```{r rowRanges}
+head(rowRanges(vcf))
+```
+
+The *info* accessor allows us to see the annotations:
+
+```{r infoSection}
+head(info(vcf))
+```
+
+and the *geno* accessor allows us to access the genotypes of the samples represented in the VCF file
+
+```{r genoSection}
+head(geno(vcf))
+```
+
+
+To simplify our analyses we can create a tibble, which we need in order to plot or create tables.
+Using *lapply* and some functions provided by the teacher, we can unnest the annotations created by **snpEff** and simplify the structure of the data.
+
+
+```{r simplifyVCF}
+variants <- as_tibble(rowRanges(vcf))
+variants$variantName = names(rowRanges(vcf))
+variants = cbind(variants, as_tibble(geno(vcf)$GT))
+variants$DP = info(vcf)$DP
+variants$QD = info(vcf)$QD
+variants$MQ = info(vcf)$MQ
+variants$gene <- unlist(lapply(info(vcf)$ANN, get_most_severe_gene))
+variants$consequence <- unlist(lapply(info(vcf)$ANN, get_most_severe_consequence))
+variants$impact <- unlist(lapply(info(vcf)$ANN, get_most_severe_impact))
+```
+
+
+
+Now that we have a tibble, we can use it to plot some quality data, like the *mapping quality* of the variants:
+
+```{r mappingQuality}
+ggplot(variants, aes(x=MQ,y=..density..))+
+  geom_density()
+```
+
+
+or the *depth* they have been sequenced at:
+
+```{r depth}
+ggplot(variants, aes(x=DP,y=..density..))+
+  geom_density()
+```
+
+
+## Variant consequences
+
+Naturally, an interesting thing is looking at the variant consequences once we have annotated the variants.
+
+A Pie Chart is in fact a Bar plot with polar coordinates: let's see how we can do it in R
+
+
+```{r consequences}
+ggplot(variants, aes(x="", y=consequence, fill=consequence))+
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar(theta = "y")+
+  theme_void()
+```
+
+There is a better way to plot this, and we can improve the plot as follows
+
+```{r piechart}
+variants %>%
+  filter(!is.na(consequence)) %>%
+  count(consequence) %>%
+  mutate(count = n,
+         percent = paste0(round(count/sum(count) * 100, digits = 2), "%"))%>%
+  arrange(desc(count)) %>%
+  mutate(lab.ypos = cumsum(count) - 0.5 * count) %>%
+  ggplot(aes(x="", y=count, fill=consequence))+
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar(theta = "y")+
+  geom_text(aes(y=lab.ypos, label=percent))+
+  theme_void()
+```
+
+But the labels are still awfully overlapping and they are not readable.
+In different situations we can use **ggrepel** to avoid labels overlaps, like follows:
+
+
+```{r piechartRepel}
+variants %>%
+  filter(!is.na(consequence)) %>%
+  count(consequence) %>%
+  mutate(count = n,
+         percent = paste0(round(count/sum(count) * 100, digits = 2), "%"))%>%
+  arrange(desc(count)) %>%
+  mutate(lab.ypos = cumsum(count) - 0.5 * count) %>%
+  ggplot(aes(x="", y=count, fill=consequence))+
+  geom_bar(width = 1, stat = "identity")+
+  coord_polar(theta = "y")+
+  ggrepel::geom_text_repel(aes(y=lab.ypos, label=percent), max.overlaps = Inf)+
+  theme_void()
+```
+
+
+In this case it does not help us very much, due to the nature of the data.
+Let's table the results instead:
+
+
+```{r consequencetable, results='asis'}
+variants %>%
+  filter(!is.na(consequence)) %>%
+  group_by(consequence) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count)) %>%
+  kable()
+```
+
+
+# Disease candidates
+
+We can filter the VCF as we did on bash, but this time is going to be easier:
+
+
+```{r filterVariants}
+selectedVars = variants %>%
+  filter(
+    impact == "HIGH",
+    normal == "0/0"
+  )
+```
+
+
+Let's use this to table the result in a simple table:
+
+```{r selectedVarTable, results='asis', echo=FALSE}
+selectedVars %>%
+  select(seqnames, start, REF, ALT, gene, consequence) %>%
+  kable()
+```
+
+
+Now, like we did in class, we want to use websites like *ClinVar* or *gnomAD* to add information to our table and present it: let's imagine we have checked on clinvar if the variant is pathogenic or not, and whether the gene is constrained for LoF variation on gnomad.
+
+The information below does not correspond to a real search result:
+
+```{r furtherAnnotations}
+selectedVars$clinvar = c("benign", "benign", "benign", "benign", "benign", "benign", 
+                         "benign", "benign", "benign", "pathogenic", "pathogenic")
+selectedVars$constrained = c("not constrained", "not constrained", "not constrained", 
+                             "not constrained", "not constrained", "not constrained", 
+                             "not constrained", "not constrained", "not constrained", 
+                             "constrained", "constrained")
+```
+
+
+Now we can table this information and present it in our report.
+We might want to select only some columns to improve the readability of the table:
+
+```{r annotatedTable, results='asis'}
+selectedVars %>%
+  select(seqnames, start, gene, consequence, clinvar, constrained) %>%
+  kable()
+```
+
