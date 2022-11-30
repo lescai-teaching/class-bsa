@@ -21,7 +21,7 @@ We therefore do this for each sample, first on the *normal* one
 
 ```{bash}
 gatk --java-options "-Xmx4g" HaplotypeCaller  \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I /config/workspace/dati_vscode/variant_calling/alignment/normal_recal.bam \
    -O normal.g.vcf.gz \
    -ERC GVCF
@@ -32,7 +32,7 @@ Then on the sample we have indicated as *disease* case.
 
 ```{bash}
 gatk --java-options "-Xmx4g" HaplotypeCaller  \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I /config/workspace/dati_vscode/variant_calling/alignment/disease_recal.bam \
    -O disease.g.vcf.gz \
    -ERC GVCF
@@ -51,14 +51,15 @@ mkdir -p tmp
 ```
 Then we put the data together, in a step that's necessary to create a local database of the samples we have called.
 
+**The following code only works on AMD64 computers - NOT on Apple Silicon**
 
 ```{bash}
 gatk --java-options "-Xmx4g -Xms4g" GenomicsDBImport \
-    -V normal.g.vcf.gz \
-    -V disease.g.vcf.gz \
-    --genomicsdb-workspace-path compared_db \
-    --tmp-dir /config/workspace/dati_vscode/variant_calling/variants/tmp \
-    -L chr21
+      -V normal.g.vcf.gz \
+      -V disease.g.vcf.gz \
+      --genomicsdb-workspace-path compared_db \
+      --tmp-dir /config/workspace/dati_vscode/variant_calling/variants/tmp \
+      -L chr21
 ```
 
 
@@ -69,10 +70,34 @@ We then use the generated database in order to call the samples together:
 
 ```{bash}
 gatk --java-options "-Xmx4g" GenotypeGVCFs \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -V gendb://compared_db \
-   --dbsnp /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_146.hg38_chr21.vcf.gz \
+   --dbsnp /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/dbsnp_146.hg38_chr21.vcf.gz \
    -O results.vcf.gz
 ```
 
 The resulting VCF file will contain data on both individuals on separate columns.
+
+
+**The following code is specific for Apple Silicon**
+
+First 
+
+```{bash}
+ gatk CombineGVCFs \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -V normal.g.vcf.gz \
+   -V disease.g.vcf.gz \
+   -O cohort.g.vcf.gz
+```
+
+
+Then:
+
+```{bash}
+gatk --java-options "-Xmx4g" GenotypeGVCFs \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -V cohort.g.vcf.gz \
+   --dbsnp /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/dbsnp_146.hg38_chr21.vcf.gz \
+   -O results.vcf.gz
+```

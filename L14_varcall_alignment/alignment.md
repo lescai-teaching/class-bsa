@@ -9,6 +9,7 @@ If you haven't done that already, you should first download the dataset required
 ```{bash}
 cd /config/workspace/dati_vscode
 git clone https://github.com/lescai-teaching/datasets_bsa-2022.git
+git clone https://github.com/lescai-teaching/datasets_reference_only.git
 ```
 
 Should this encounter problems (the dataset is minimal but several files need to be downloaded), you can download the packaged repository as follows:
@@ -57,7 +58,7 @@ We do that separately for each of the samples: first the normal sample
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:normal\tPL:illumina\tLB:sim" \
-/config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_1.000+disease_0.000_1.fq.gz \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_1.000+disease_0.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o normal.bam -
@@ -70,7 +71,7 @@ Then our simulated disease case sample:
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:disease\tPL:illumina\tLB:sim" \
-/config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_0.000+disease_1.000_1.fq.gz \
 /config/workspace/dati_vscode/variant_calling/raw_data/normal_0.000+disease_1.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o disease.bam -
@@ -123,16 +124,16 @@ First we calculate the shift in quality scores, and create a recalibration table
 ```{bash}
 gatk BaseRecalibrator \
    -I normal_md.bam \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O normal_recal_data.table
 
 gatk BaseRecalibrator \
    -I disease_md.bam \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /config/workspace/dati_vscode/datasets_bsa-2022/reference/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /config/workspace/dati_vscode/datasets_reference_only/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O disease_recal_data.table
 ```
 
@@ -143,13 +144,13 @@ Then, we use the recalibration table to modify the quality scores in the BAM fil
 
 ```{bash}
 gatk ApplyBQSR \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I normal_md.bam \
    --bqsr-recal-file normal_recal_data.table \
    -O normal_recal.bam
 
 gatk ApplyBQSR \
-   -R /config/workspace/dati_vscode/datasets_bsa-2022/reference/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /config/workspace/dati_vscode/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I disease_md.bam \
    --bqsr-recal-file disease_recal_data.table \
    -O disease_recal.bam
