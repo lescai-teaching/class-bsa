@@ -10,6 +10,8 @@ library(org.Hs.eg.db)
 ## PREPARE DATASET CONDITIONS #####
 ###################################
 
+setwd("/home/rstudio/dati_rstudio/rnaseq_exercise")
+
 dataset <- tibble(
   sample = c("sample_01",
              "sample_02",
@@ -20,14 +22,14 @@ dataset <- tibble(
   condition = c(rep("control", 3),
                 rep("case", 3))
 )
-tx2gene <- read_tsv("/home/rstudio/data/datasets_class/reference/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
+tx2gene <- read_tsv("/home/rstudio/dati_vscode/datasets_reference_only/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
 
 
 ###################################
 #### READ LOCAL FILES IN ##########
 ###################################
 
-files <- file.path("/home/rstudio/data/rnaseq_exercise/reads/", paste0(dataset$sample,".quant"), "quant.sf")
+files <- file.path("/home/rstudio/dati_rstudio/rnaseq_exercise/reads/", paste0(dataset$sample,".quant"), "quant.sf")
 names(files) <- dataset$sample
 
 txi <- tximport(files, type = "salmon", tx2gene = tx2gene)

@@ -6,6 +6,7 @@ library(clusterProfiler)
 library(DOSE)
 library(org.Hs.eg.db)
 
+setwd("/home/rstudio/dati_rstudio/rnaseq_exercise")
 load("deseq2_analysis.RData")
 
 
@@ -71,3 +72,6 @@ disgnet = enricher(entrez_genes_sig, TERM2GENE=disease2gene, TERM2NAME=disease2n
 pdf("plots_net-disgnet.pdf")
 cnetplot(disgnet, foldChange=resdata$log2FoldChange[which(resdata$padj<0.5)])
 dev.off()
+
+
+save.image("deseq2_analysis.RData")

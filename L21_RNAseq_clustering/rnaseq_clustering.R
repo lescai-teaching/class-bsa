@@ -6,7 +6,7 @@ library(clusterProfiler)
 library(DOSE)
 library(org.Hs.eg.db)
 
-
+setwd("/home/rstudio/dati_rstudio/rnaseq_exercise")
 load("deseq2_analysis.RData")
 
 

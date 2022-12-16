@@ -1,4 +1,7 @@
-so_consequences <- readRDS(url("https://github.com/lescai-teaching/datasets_class/blob/master/reference/annotations/ranked_ensembl_consequences.RData?raw=true", "rb"))
+so_consequences <- readRDS(
+  url("https://raw.githubusercontent.com/lescai-teaching/datasets_reference_only/main/annotations/ranked_ensembl_consequences.RData", 
+      "rb")
+  )
 
 get_from_ann <- function(annotation, element){
   data <- unlist(str_split(annotation, "\\|"))

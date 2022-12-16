@@ -3,7 +3,7 @@ title: "Variant Analysis"
 subtitle: "<br/>normal and disease samples"
 author: "Francesco Lescai"
 institute: "Dip. Biologia e Biotecnologie - UniPV"
-date: "2016/12/12 (updated: `r Sys.Date()`)"
+date: "2022/12/12 (updated: `r Sys.Date()`)"
 output:
   xaringan::moon_reader:
     lib_dir: libs
@@ -25,77 +25,11 @@ library(kableExtra)
 library(VariantAnnotation)
 library(tidyverse)
 library(reticulate)
-setwd("~/data/markdown_exercise")
-use_python('/opt/software/bin/python')
-use_condaenv(condaenv = "base", conda = "/opt/software/bin/conda")
-source("extract_annotations.R")
+setwd("/home/rstudio/dati_rstudio/markdown_exercise")
+source("/home/rstudio/dati_vscode/datasets_reference_only/annotations/extract_annotations.R")
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, tinytex.verbose = TRUE)
 ```
 
----
-# Quality Control
-
-First important thing during an analysis is: check the quality of the raw data.
-We do this by using Biopython, and plotting the Phred quality of a sample of 5,000 reads from the original file.
-
-```{python, readSequences}
-from Bio import SeqIO
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as pyplot
-import numpy as np
-import pandas as pd
-
-def seq_quality(reads):
-  data = SeqIO.parse( reads, 'fastq')
-  pList = []
-  phredList =[]
-  lengths = []
-  for record in data:
-    pArray = []
-    phredArray = []
-    qualities = record.letter_annotations["phred_quality"]
-    for Q in qualities:
-        # convert the PHRED score to a probability
-        p = 10**(-float(Q)/10)
-        # append this specific probabity to array for this sequence
-        pArray = pArray + [p] 
-        phredArray += [Q]
-    # now append the sequence's probablity to a list of all of them    
-    pList = pList + [pArray]
-    # also append the phred qualities as they are
-    phredList += [phredArray]
-    # store the length of the probability array (same as length of sequence)
-    lengths += [len(pArray)]
-  phredData = pd.DataFrame(phredList)
-  return(phredData)
-
-forwardQuality = seq_quality('/home/rstudio/data/markdown_exercise/reads/normal_sample_1.fq')
-reverseQuality = seq_quality('/home/rstudio/data/markdown_exercise/reads/normal_sample_2.fq')
-```
-
-
-Once we do this in python, we can then manage the data we have extracted from within R. 
-The *py* object contains the objects generated within python.
-
-```{r prepQualData}
-fwQualData = py$forwardQuality
-fwQualData$record = paste0("read_", 1:dim(fwQualData)[1])
-fwQualData = fwQualData %>%
-  pivot_longer(cols = c(1:105), names_to = "basePos", values_to = "phredQual")
-fwQualData$basePos = as.numeric(fwQualData$basePos)
-head(fwQualData)
-```
-
----
-# Forward quality 
-
-Now we can plot the results from the forward reads.
-
-```{r plotQualData, fig.height=5}
-ggplot(fwQualData, aes(x=basePos, y=phredQual))+
-  geom_smooth()
-```
 
 ---
 
