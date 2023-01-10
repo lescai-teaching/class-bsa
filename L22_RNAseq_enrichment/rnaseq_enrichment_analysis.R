@@ -60,7 +60,7 @@ dev.off()
 ## cd /home/rstudio/data/datasets_class/reference/trascriptome/
 ## gunzip all_gene_disease_associations.tsv.gz
 
-gda <- read_tsv(gzfile("/home/rstudio/data/datasets_class/reference/trascriptome/all_gene_disease_associations.tsv.gz"))
+gda <- read_tsv(gzfile("/home/rstudio/dati_vscode/datasets_reference_only/trascriptome/all_gene_disease_associations.tsv.gz"))
 
 disease2gene=gda[, c("diseaseId", "geneId")]
 disease2name=gda[, c("diseaseId", "diseaseName")]
