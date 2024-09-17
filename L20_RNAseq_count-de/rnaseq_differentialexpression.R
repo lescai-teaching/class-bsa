@@ -10,7 +10,7 @@ library(org.Hs.eg.db)
 ## PREPARE DATASET CONDITIONS #####
 ###################################
 
-setwd("/home/rstudio/dati_rstudio/rnaseq_exercise")
+setwd("/workspaces/class-rnaseq/analysis")
 
 dataset <- tibble(
   sample = c("sample_01",
@@ -22,14 +22,14 @@ dataset <- tibble(
   condition = c(rep("control", 3),
                 rep("case", 3))
 )
-tx2gene <- read_tsv("/home/rstudio/dati_vscode/datasets_reference_only/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
+tx2gene <- read_tsv("/workspaces/class-rnaseq/datasets_reference_only/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
 
 
 ###################################
 #### READ LOCAL FILES IN ##########
 ###################################
 
-files <- file.path("/home/rstudio/dati_rstudio/rnaseq_exercise/reads/", paste0(dataset$sample,".quant"), "quant.sf")
+files <- file.path("/workspaces/class-rnaseq/analysis/reads/", paste0(dataset$sample,".quant"), "quant.sf")
 names(files) <- dataset$sample
 
 txi <- tximport(files, type = "salmon", tx2gene = tx2gene)
@@ -66,17 +66,11 @@ resOrdered <- res[order(res$pvalue),]
 
 ## writeLines(summary(res), "differential_expression_summary.txt")
 
-pdf("plots_maplot.pdf")
 plotMA(res, ylim=c(-3,3))
-dev.off()
 
-pdf("plots_dispersion.pdf")
 plotDispEsts(dds)
-dev.off()
 
-pdf("plots_counts.pdf")
 plotCounts(dds, gene=which.min(res$padj), intgroup="condition")
-dev.off()
 
 ###################################
 ## WRITE RESULTS OF ANALYSIS #####
@@ -87,3 +81,10 @@ resdata$gene <- rownames(resOrdered)
 write_tsv(resdata, "analysis_results.tsv")
 
 save.image("deseq2_analysis.RData")
+
+
+#### on bash
+# cd /workspaces/class-rnaseq/analysis
+# git add deseq2_analysis.RData 
+# git commit -m "saving analysis"
+# git push

@@ -1,30 +1,26 @@
-### locate data you need:
 
-## datasets are in
-## {where-you-put-it}/dati_vscode/datasets_bsa-2022/rna_sequencing/raw_data
-
-cd /home/rstudio/dati_rstudio
-mkdir -p rnaseq_exercise
-cd rnaseq_exercise
+cd /workspaces/class-rnaseq
+mkdir -p analysis
+cd analysis
 
 ## instead of copying - we create symbolic links to the original reads
 mkdir reads
 cd reads
-ln -s /home/rstudio/dati_vscode/datasets_bsa-2022/rna_sequencing/raw_data/* .
+ln -s /workspaces/class-rnaseq/datasets-class-rnaseq/raw_data/* .
 
 ### check if you can execute salmon by typing "salmon" on the terminal
-## in my case
-export PATH=${PATH}:/opt/software/salmon-1.5.2/bin/
+## sometimes it fails on RStudio terminal, on CodeSpaces while it works on GitPod
+## export PATH=${PATH}:/usr/local/bin
 
 ## the index for the transcriptome is located in
-## /home/rstudio/dati_vscode/datasets_reference_only/trascriptome/chr21_transcripts_index
+## /workspaces/class-rnaseq/datasets_reference_only/trascriptome/chr21_transcripts_index
 
 ## now we can quantify all samples, by running a loop with salmon and the following
 
 
 for sample in `ls *_1.fasta.gz`
 do
-index="/home/rstudio/dati_vscode/datasets_reference_only/trascriptome/chr21_transcripts_index"
+index="/workspaces/class-rnaseq/datasets_reference_only/trascriptome/chr21_transcripts_index"
 name=${sample%_1.fasta.gz}
 echo "quantifying $name"
 salmon quant \
@@ -44,4 +40,3 @@ head quant.sf
 
 ## more information on the format of the output
 ## https://salmon.readthedocs.io/en/latest/file_formats.html
-

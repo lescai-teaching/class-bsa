@@ -6,7 +6,7 @@ library(clusterProfiler)
 library(DOSE)
 library(org.Hs.eg.db)
 
-setwd("/home/rstudio/dati_rstudio/rnaseq_exercise")
+setwd("/workspaces/class-rnaseq/analysis")
 load("deseq2_analysis.RData")
 
 
@@ -60,7 +60,7 @@ dev.off()
 ## cd /home/rstudio/data/datasets_class/reference/trascriptome/
 ## gunzip all_gene_disease_associations.tsv.gz
 
-gda <- read_tsv(gzfile("/home/rstudio/dati_vscode/datasets_reference_only/trascriptome/all_gene_disease_associations.tsv.gz"))
+gda <- read_tsv(gzfile("/workspaces/class-rnaseq/datasets_reference_only/trascriptome/all_gene_disease_associations.tsv.gz"))
 
 disease2gene=gda[, c("diseaseId", "geneId")]
 disease2name=gda[, c("diseaseId", "diseaseName")]
@@ -69,9 +69,7 @@ disgnet = enricher(entrez_genes_sig, TERM2GENE=disease2gene, TERM2NAME=disease2n
 
 ## writeLines(summary(disgnet), "summary_disgnet.txt")
 
-pdf("plots_net-disgnet.pdf")
 cnetplot(disgnet, foldChange=resdata$log2FoldChange[which(resdata$padj<0.5)])
-dev.off()
 
 
 save.image("deseq2_analysis.RData")
