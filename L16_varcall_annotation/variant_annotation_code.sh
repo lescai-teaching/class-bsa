@@ -19,8 +19,14 @@ grep "#" results_ann.vcf >filtered_variants.vcf
 cat results_ann.vcf | grep HIGH | perl -nae 'if($F[10]=~/0\/0/ && $F[9]=~/1\/1/){print $_;}' >>filtered_variants.vcf
 cat results_ann.vcf | grep HIGH | perl -nae 'if($F[10]=~/0\/0/ && $F[9]=~/0\/1/){print $_;}' >>filtered_variants.vcf
 
-conda install bioconda::snpsift
+sudo conda install bioconda::snpsift
 
-SnpSift extractFields filtered_variants.vcf "CHROM" "POS" "ID" "GEN[*].GT" ANN[1].GENE ANN[*].EFFECT
+SnpSift extractFields \
+-s "," -e "." \
+filtered_variants.vcf \
+"CHROM" "POS" "ID" "GEN[disease].GT" "GEN[normal].GT" ANN[*].GENE ANN[*].EFFECT
 
-SnpSift extractFields filtered_variants.vcf "CHROM" "POS" "ID" "GEN[*].GT" ANN[1].GENE ANN[1].EFFECT
+SnpSift extractFields \
+-s "," -e "." \
+filtered_variants.vcf \
+"CHROM" "POS" "ID" "GEN[*].GT" ANN[0].GENE ANN[0].EFFECT
