@@ -29,4 +29,4 @@ filtered_variants.vcf \
 SnpSift extractFields \
 -s "," -e "." \
 filtered_variants.vcf \
-"CHROM" "POS" "ID" REF ALT "GEN[*].GT" ANN[0].GENE ANN[0].EFFECT
+"CHROM" "POS" "ID" "REF" "ALT" "GEN[*].GT" ANN[0].GENE ANN[0].EFFECT
