@@ -16,7 +16,7 @@ cd alignment
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:normal\tPL:illumina\tLB:sim" \
-/workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /workspaces/class-variantcalling/analysis/raw_data/normal_1.000+disease_0.000_1.fq.gz \
 /workspaces/class-variantcalling/analysis/raw_data/normal_1.000+disease_0.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o normal.bam -
@@ -26,7 +26,7 @@ bwa mem \
 bwa mem \
 -t 2 \
 -R "@RG\tID:sim\tSM:disease\tPL:illumina\tLB:sim" \
-/workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+/workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
 /workspaces/class-variantcalling/analysis/raw_data/normal_0.000+disease_1.000_1.fq.gz \
 /workspaces/class-variantcalling/analysis/raw_data/normal_0.000+disease_1.000_2.fq.gz \
 | samtools view -@ 8 -bhS -o disease.bam -
@@ -60,29 +60,29 @@ gatk MarkDuplicates \
 
 gatk BaseRecalibrator \
    -I normal_md.bam \
-   -R /workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /workspaces/class-variantcalling/datasets_reference_only/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /workspaces/class-variantcalling/datasets_reference_only/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /workspaces/class-variantcalling/reference_chr21/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /workspaces/class-variantcalling/reference_chr21/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O normal_recal_data.table
 
 gatk BaseRecalibrator \
    -I disease_md.bam \
-   -R /workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
-   --known-sites /workspaces/class-variantcalling/datasets_reference_only/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
-   --known-sites /workspaces/class-variantcalling/datasets_reference_only/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
+   -R /workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   --known-sites /workspaces/class-variantcalling/reference_chr21/gatkbundle/dbsnp_144.hg38_chr21.vcf.gz \
+   --known-sites /workspaces/class-variantcalling/reference_chr21/gatkbundle/Mills_and_1000G_gold_standard.indels.hg38_chr21.vcf.gz \
    -O disease_recal_data.table
 
 
 #### Apply recalibration
 
 gatk ApplyBQSR \
-   -R /workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I normal_md.bam \
    --bqsr-recal-file normal_recal_data.table \
    -O normal_recal.bam
 
 gatk ApplyBQSR \
-   -R /workspaces/class-variantcalling/datasets_reference_only/sequence/Homo_sapiens_assembly38_chr21.fasta \
+   -R /workspaces/class-variantcalling/reference_chr21/sequence/Homo_sapiens_assembly38_chr21.fasta \
    -I disease_md.bam \
    --bqsr-recal-file disease_recal_data.table \
    -O disease_recal.bam

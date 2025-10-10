@@ -8,7 +8,8 @@ cd /workspaces/class-variantcalling
 
 git clone https://github.com/lescai-teaching/class-bsa.git
 git clone https://github.com/lescai-teaching/datasets-class-variantcalling.git
-git clone https://github.com/lescai-teaching/datasets_reference_only.git
+git clone https://github.com/lescai-teaching/reference_chr21.git
+git clone https://github.com/lescai-teaching/reference_chr22.git
 
 rm -rf */.git
 git add *
@@ -24,7 +25,8 @@ cd /workspaces/class-rnaseq
 
 git clone https://github.com/lescai-teaching/class-bsa.git
 git clone https://github.com/lescai-teaching/datasets-class-rnaseq.git
-git clone https://github.com/lescai-teaching/datasets_reference_only.git
+git clone https://github.com/lescai-teaching/reference_chr21.git
+git clone https://github.com/lescai-teaching/reference_chr22.git
 
 rm -rf */.git
 git add *
