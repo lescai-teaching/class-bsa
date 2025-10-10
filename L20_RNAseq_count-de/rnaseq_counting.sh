@@ -13,14 +13,14 @@ ln -s /workspaces/class-rnaseq/datasets-class-rnaseq/raw_data/* .
 ## export PATH=${PATH}:/usr/local/bin
 
 ## the index for the transcriptome is located in
-## /workspaces/class-rnaseq/datasets_reference_only/trascriptome/chr21_transcripts_index
+## /workspaces/class-rnaseq/reference_chr21/transcriptome/chr21_transcripts_index
 
 ## now we can quantify all samples, by running a loop with salmon and the following
 
 
 for sample in `ls *_1.fasta.gz`
 do
-index="/workspaces/class-rnaseq/datasets_reference_only/trascriptome/chr21_transcripts_index"
+index="/workspaces/class-rnaseq/reference_chr21/transcriptome/chr21_transcripts_index"
 name=${sample%_1.fasta.gz}
 echo "quantifying $name"
 salmon quant \
