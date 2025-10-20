@@ -18,9 +18,6 @@ git lfs checkout
 cd /workspaces/class-variantcalling
 
 rm -rf */.git
-git add *
-git commit -m "adding data to repository"
-git push
 
 
 ###########################################
@@ -40,6 +37,3 @@ git lfs checkout
 
 cd /workspaces/class-rnaseq
 rm -rf */.git
-git add *
-git commit -m "adding data to repository"
-git push
