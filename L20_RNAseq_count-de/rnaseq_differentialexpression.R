@@ -22,7 +22,7 @@ dataset <- tibble(
   condition = c(rep("control", 3),
                 rep("case", 3))
 )
-tx2gene <- read_tsv("/workspaces/class-rnaseq/datasets_reference_only/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
+tx2gene <- read_tsv("/workspaces/class-rnaseq/reference_chr21/trascriptome/gencode.v29.transcripts_no-vers_chr21_tx2gene.txt")
 
 
 ###################################

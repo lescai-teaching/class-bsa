@@ -34,7 +34,7 @@ names(pvalue_entrez_genes) <- entrez_genes_sig
 ###################################
 
 ego <- enrichGO( gene = sig_genes,
-                 universe = unique(tx2gene$GENEID),
+                 universe = unique(tx2gene$GENEID), # <- if using other chrs use universe = unique(tx2gene$gene_id)
                  OrgDb = org.Hs.eg.db,
                  keyType = 'ENSEMBL',
                  ont = "BP",
@@ -60,7 +60,7 @@ dev.off()
 ## cd /home/rstudio/data/datasets_class/reference/trascriptome/
 ## gunzip all_gene_disease_associations.tsv.gz
 
-gda <- read_tsv(gzfile("/workspaces/class-rnaseq/datasets_reference_only/trascriptome/all_gene_disease_associations.tsv.gz"))
+gda <- read_tsv(gzfile("/workspaces/class-rnaseq/reference_chr21/trascriptome/all_gene_disease_associations.tsv.gz"))
 
 disease2gene=gda[, c("diseaseId", "geneId")]
 disease2name=gda[, c("diseaseId", "diseaseName")]
