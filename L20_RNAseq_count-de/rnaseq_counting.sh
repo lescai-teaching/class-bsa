@@ -10,7 +10,7 @@ ln -s /workspaces/class-rnaseq/datasets-class-rnaseq/raw_data/* .
 
 ### check if you can execute salmon by typing "salmon" on the terminal
 ## sometimes it fails on RStudio terminal, on CodeSpaces while it works on GitPod
-## export PATH=${PATH}:/usr/local/bin
+## export PATH=${PATH}:/opt/conda/bin
 
 ## the index for the transcriptome is located in
 ## /workspaces/class-rnaseq/reference_chr21/transcriptome/chr21_transcripts_index
