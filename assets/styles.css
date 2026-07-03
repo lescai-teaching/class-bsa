@@ -1,0 +1,254 @@
+:root {
+  --page: #f7f5f0;
+  --paper: #ffffff;
+  --ink: #1f2528;
+  --muted: #626c70;
+  --line: #d9d5ca;
+  --accent: #205b66;
+  --accent-strong: #164750;
+  --accent-soft: #dbe8e8;
+  --shadow: 0 14px 34px rgb(31 37 40 / 10%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--page);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.5;
+}
+
+.site-header {
+  border-bottom: 1px solid var(--line);
+  background:
+    linear-gradient(90deg, rgb(32 91 102 / 10%), transparent 55%),
+    var(--paper);
+}
+
+.header-inner {
+  width: min(1180px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 48px 0 38px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+h1 {
+  max-width: 920px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.2rem, 5vw, 4.7rem);
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 1.08rem;
+}
+
+.intro {
+  max-width: 720px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.layout {
+  width: min(1180px, calc(100% - 40px));
+  margin: 34px auto 48px;
+  display: grid;
+  grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.catalog,
+.viewer {
+  min-width: 0;
+}
+
+.section-heading,
+.viewer-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: end;
+  margin-bottom: 14px;
+}
+
+.section-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.material-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.material-card {
+  width: 100%;
+  min-height: 96px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.material-card:hover,
+.material-card:focus-visible,
+.material-card[aria-current="true"] {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.card-title,
+.card-meta,
+.card-file {
+  display: block;
+}
+
+.card-title {
+  overflow-wrap: anywhere;
+  font-weight: 700;
+  font-size: 1.02rem;
+}
+
+.card-meta {
+  margin-top: 8px;
+  color: var(--accent-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.card-file {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.empty-card {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: rgb(255 255 255 / 55%);
+  color: var(--muted);
+}
+
+.viewer {
+  position: sticky;
+  top: 20px;
+}
+
+.viewer-heading {
+  min-height: 42px;
+}
+
+.direct-link {
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.viewer-frame {
+  overflow: hidden;
+  min-height: 680px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.viewer-frame iframe {
+  display: block;
+  width: 100%;
+  height: 72vh;
+  min-height: 680px;
+  border: 0;
+  background: var(--paper);
+}
+
+.viewer-frame.empty {
+  display: grid;
+  place-items: center;
+  min-height: 360px;
+  box-shadow: none;
+}
+
+.viewer-frame.empty p {
+  max-width: 320px;
+  margin: 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (max-width: 860px) {
+  .header-inner,
+  .layout {
+    width: min(100% - 28px, 680px);
+  }
+
+  .header-inner {
+    padding: 34px 0 30px;
+  }
+
+  .layout {
+    display: block;
+    margin-top: 26px;
+  }
+
+  .viewer {
+    position: static;
+    margin-top: 30px;
+  }
+
+  .section-heading,
+  .viewer-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .section-heading p,
+  .direct-link {
+    white-space: normal;
+  }
+
+  .viewer-frame,
+  .viewer-frame iframe {
+    min-height: 520px;
+  }
+}
