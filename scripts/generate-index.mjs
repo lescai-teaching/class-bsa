@@ -12,6 +12,14 @@ function encodePath(...segments) {
   return segments.map((segment) => encodeURIComponent(segment)).join("/");
 }
 
+function titleFromFolder(folderName) {
+  return folderName
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 async function exists(filePath) {
   try {
     await access(filePath);
@@ -29,6 +37,7 @@ async function getFolderEntry(folderName) {
   if (await exists(indexPath)) {
     return {
       name: folderName,
+      title: titleFromFolder(folderName),
       type: "html",
       href: `${encodePath(folderName)}/`,
       file: "index.html"
@@ -43,6 +52,7 @@ async function getFolderEntry(folderName) {
   if (pdf) {
     return {
       name: folderName,
+      title: titleFromFolder(folderName),
       type: "pdf",
       href: encodePath(folderName, pdf),
       file: pdf
@@ -51,6 +61,7 @@ async function getFolderEntry(folderName) {
 
   return {
     name: folderName,
+    title: titleFromFolder(folderName),
     type: "unsupported",
     href: null,
     file: null

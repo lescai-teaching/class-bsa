@@ -1,4 +1,26 @@
 {
-  "generatedAt": "2026-07-03T08:05:04.043Z",
-  "items": []
+  "generatedAt": "2026-07-03T08:11:06.541Z",
+  "items": [
+    {
+      "name": "laboratorio_ora",
+      "title": "Laboratorio Ora",
+      "type": "html",
+      "href": "laboratorio_ora/",
+      "file": "index.html"
+    },
+    {
+      "name": "ora_infografica",
+      "title": "Ora Infografica",
+      "type": "pdf",
+      "href": "ora_infografica/ora_infografica.pdf",
+      "file": "ora_infografica.pdf"
+    },
+    {
+      "name": "salmon_algorithm",
+      "title": "Salmon Algorithm",
+      "type": "pdf",
+      "href": "salmon_algorithm/salmon_algorithm.pdf",
+      "file": "salmon_algorithm.pdf"
+    }
+  ]
 }

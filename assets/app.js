@@ -22,7 +22,7 @@ function setSelected(item) {
     card.toggleAttribute("aria-current", card.dataset.name === item.name);
   });
 
-  viewerTitle.textContent = item.name;
+  viewerTitle.textContent = item.title || item.name;
   viewerFrame.className = "viewer-frame";
   viewerFrame.innerHTML = "";
 
@@ -37,7 +37,7 @@ function setSelected(item) {
   openDirect.hidden = false;
 
   const frame = document.createElement("iframe");
-  frame.title = item.type === "pdf" ? `PDF: ${item.name}` : `Pagina: ${item.name}`;
+  frame.title = item.type === "pdf" ? `PDF: ${item.title || item.name}` : `Pagina: ${item.title || item.name}`;
   frame.src = item.href;
   viewerFrame.append(frame);
 }
@@ -50,7 +50,7 @@ function createCard(item) {
 
   const title = document.createElement("span");
   title.className = "card-title";
-  title.textContent = item.name;
+  title.textContent = item.title || item.name;
 
   const meta = document.createElement("span");
   meta.className = "card-meta";

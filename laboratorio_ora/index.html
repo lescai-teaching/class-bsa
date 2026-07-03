@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capire l'Over Representation Analysis (ORA)</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --secondary: #475569;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            line-height: 1.6;
+            color: #334155;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        h1 { color: var(--primary); margin-bottom: 0.5rem; }
+        .subtitle { color: var(--secondary); font-size: 1.1rem; }
+
+        /* Layout Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 900px) {
+            .dashboard { grid-template-columns: 1fr; }
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--secondary);
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Controls */
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        .number-display {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .definition {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Visualizations */
+        .viz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: var(--primary-light);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--secondary);
+        }
+
+        /* Contingency Table */
+        .contingency-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .contingency-table th, .contingency-table td {
+            border: 1px solid #cbd5e1;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .contingency-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .highlight-cell {
+            background-color: #dbeafe; /* Light blue */
+            font-weight: bold;
+            color: var(--primary);
+            border: 2px solid var(--primary) !important;
+        }
+
+        /* Bar Comparison Visualization */
+        .bar-viz {
+            margin-top: 20px;
+        }
+        
+        .bar-group {
+            margin-bottom: 15px;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .bar-track {
+            height: 24px;
+            background-color: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            color: white;
+            font-size: 0.8rem;
+        }
+
+        .p-value-display {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .significant {
+            background-color: #d1fae5;
+            border: 2px solid var(--success);
+            color: #065f46;
+        }
+
+        .not-significant {
+            background-color: #fee2e2;
+            border: 2px solid var(--danger);
+            color: #991b1b;
+        }
+
+        .explanation {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fffbeb;
+            border-left: 4px solid var(--accent);
+            font-size: 0.95rem;
+        }
+
+        /* SVG Venn Styles */
+        .venn-svg-container {
+            width: 100%;
+            height: 300px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+        }
+
+        .venn-circle-pathway {
+            fill: var(--primary);
+            fill-opacity: 0.5;
+            stroke: var(--primary);
+            stroke-width: 2;
+            transition: all 0.5s ease;
+        }
+
+        .venn-circle-deg {
+            fill: var(--accent);
+            fill-opacity: 0.5;
+            stroke: var(--accent);
+            stroke-width: 2;
+            transition: all 0.5s ease;
+        }
+
+        .venn-text {
+            font-size: 12px;
+            fill: #333;
+            font-weight: bold;
+            pointer-events: none;
+            text-anchor: middle;
+            transition: all 0.5s ease;
+        }
+        
+        .venn-label-main {
+            font-size: 14px;
+            font-weight: 800;
+            fill: #1e293b;
+        }
+
+        .urn-analogy {
+            background-color: #f0f9ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px dashed var(--primary);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .urn-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Laboratorio di Over Representation Analysis (ORA)</h1>
+        <div class="subtitle">Simulazione interattiva del Test Ipergeometrico di Fisher</div>
+    </header>
+
+    <div class="dashboard">
+        
+        <!-- Left Panel: Controls -->
+        <div class="controls-panel">
+            <div class="card">
+                <h3>🎛️ Parametri Sperimentali</h3>
+                
+                <!-- Universe (N) -->
+                <div class="control-group">
+                    <label>
+                        Background / Universo (N)
+                        <span class="number-display" id="val-N">20000</span>
+                    </label>
+                    <input type="range" id="input-N" min="1000" max="25000" step="100" value="20000">
+                    <div class="definition">Tutti i geni misurabili nel tuo esperimento (es. tutto il genoma o i geni espressi).</div>
+                </div>
+
+                <!-- Pathway Size (K) -->
+                <div class="control-group">
+                    <label>
+                        Dimensione Pathway (K)
+                        <span class="number-display" id="val-K">500</span>
+                    </label>
+                    <input type="range" id="input-K" min="10" max="2000" step="10" value="500">
+                    <div class="definition">Quanti geni appartengono a questo specifico pathway biologico.</div>
+                </div>
+
+                <!-- DEG List Size (n) -->
+                <div class="control-group">
+                    <label>
+                        Lista dei DEG (n)
+                        <span class="number-display" id="val-n">300</span>
+                    </label>
+                    <input type="range" id="input-n" min="10" max="2000" step="10" value="300">
+                    <div class="definition">Quanti geni sono risultati differenzialmente espressi (Input list).</div>
+                </div>
+
+                <!-- Overlap (k) -->
+                <div class="control-group">
+                    <label>
+                        Overlap / Successi (k)
+                        <span class="number-display" id="val-k">20</span>
+                    </label>
+                    <input type="range" id="input-k" min="0" max="300" step="1" value="20">
+                    <div class="definition">Quanti dei tuoi DEG cadono dentro il Pathway.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💡 Perché l'Universo conta?</h3>
+                <p style="font-size: 0.9rem;">
+                    Prova a tenere costanti i <strong>DEG</strong> e i geni nel <strong>Pathway</strong>, ma riduci l'<strong>Universo (N)</strong>.
+                    Noterai che il P-value peggiora (sale). <br><br>
+                    <em>Lezione:</em> Riducendo l'universo, la "densità" attesa del pathway aumenta, quindi trovare quei geni diventa meno sorprendente.
+                </p>
+            </div>
+        </div>
+
+        <!-- Right Panel: Visualization & Results -->
+        <div class="viz-container">
+            
+            <!-- Result Banner -->
+            <div id="result-box" class="p-value-display not-significant">
+                <div style="font-size: 0.9rem; text-transform: uppercase; margin-bottom: 5px;">Fisher's Exact P-Value</div>
+                <div style="font-size: 2.5rem; font-weight: 800;" id="p-value-text">0.051</div>
+                <div id="significance-text" style="font-weight: 600;">Non Significativo</div>
+            </div>
+
+            <!-- Venn Diagram -->
+            <div class="card">
+                <h3>📊 Diagramma di Venn Proporzionale</h3>
+                <div class="venn-svg-container">
+                    <svg id="venn-svg" viewBox="0 0 400 300">
+                        <!-- Universe Box -->
+                        <rect x="10" y="10" width="380" height="280" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="5,5" />
+                        <text x="380" y="30" text-anchor="end" fill="#94a3b8" font-size="12">Universo (N)</text>
+                        
+                        <!-- Circles -->
+                        <circle id="circle-pathway" class="venn-circle-pathway" cx="150" cy="150" r="80" />
+                        <circle id="circle-deg" class="venn-circle-deg" cx="250" cy="150" r="60" />
+                        
+                        <!-- Labels -->
+                        <text id="label-K-k" class="venn-text" x="100" y="150">Path Only</text>
+                        <text id="label-k" class="venn-text" x="200" y="150">Intersection</text>
+                        <text id="label-n-k" class="venn-text" x="300" y="150">DEG Only</text>
+
+                        <!-- Main Titles for Circles -->
+                        <text id="title-pathway" class="venn-label-main" x="150" y="50" fill="var(--primary)">Pathway (K)</text>
+                        <text id="title-deg" class="venn-label-main" x="250" y="260" fill="var(--accent)">Miei Geni (n)</text>
+                    </svg>
+                </div>
+                <div style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">
+                    L'area centrale rappresenta l'<strong>Overlap (k)</strong>: i geni che sono SIA nel pathway SIA nella tua lista.
+                </div>
+            </div>
+
+            <!-- Enrichment Logic & Urn Analogy -->
+            <div class="card">
+                <h3>🎲 L'Atteso vs L'Osservato</h3>
+                
+                <div class="urn-analogy">
+                    <div class="urn-title">🏺 L'Analogia dell'Urna (Perché K/N?)</div>
+                    <p style="margin:0;">
+                        Immagina l'Universo come un'urna contenente <strong><span id="txt-N">20000</span> palline</strong>.
+                        Di queste, <strong><span id="txt-K">500</span> sono Blu (Pathway)</strong> e le restanti sono Grigie.
+                        <br><br>
+                        Se chiudi gli occhi e peschi <strong><span id="txt-n">300</span> palline (i tuoi DEG)</strong> a caso, quante palline Blu ti aspetti di trovare?
+                        <br>
+                        <strong>Risposta:</strong> Ti aspetti la stessa proporzione presente nell'urna originale. 
+                        Se l'urna è fatta al <span id="txt-pct">2.5%</span> di palline Blu, ti aspetti che anche la tua manciata contenga il <span id="txt-pct2">2.5%</span> di palline Blu.
+                    </p>
+                </div>
+
+                <div class="bar-viz">
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span><strong>Atteso (Ipotesi Nulla):</strong> Pathway % nell'Universo (K/N)</span>
+                            <span id="expected-ratio">2.5%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div id="bar-expected" class="bar-fill" style="width: 2.5%; background-color: #94a3b8;"></div>
+                        </div>
+                    </div>
+
+                    <div class="bar-group">
+                        <div class="bar-label">
+                            <span><strong>Osservato (Reale):</strong> Pathway % nei tuoi DEG (k/n)</span>
+                            <span id="observed-ratio">6.6%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div id="bar-observed" class="bar-fill" style="width: 6.6%; background-color: var(--success);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="margin-top: 20px;">
+                    <div class="stat-box">
+                        <div class="stat-value" id="fold-enrichment">2.6x</div>
+                        <div class="stat-label">Fold Enrichment</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="odds-ratio">2.7</div>
+                        <div class="stat-label">Odds Ratio</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Matrix -->
+            <div class="card">
+                <h3>🧮 La Matematica: Tabella di Contingenza</h3>
+                <table class="contingency-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Nel Pathway</th>
+                            <th>Non nel Pathway</th>
+                            <th>Totale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>I tuoi Geni (n)</th>
+                            <td class="highlight-cell" id="cell-k">k</td>
+                            <td id="cell-n-k">n-k</td>
+                            <td id="cell-n">n</td>
+                        </tr>
+                        <tr>
+                            <th>Resto Genoma</th>
+                            <td id="cell-K-k">K-k</td>
+                            <td id="cell-rest">Resto</td>
+                            <td id="cell-N-n">N-n</td>
+                        </tr>
+                        <tr>
+                            <th>Totale</th>
+                            <td id="cell-K">K</td>
+                            <td id="cell-N-K">N-K</td>
+                            <td id="cell-N">N</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Explanation Logic -->
+            <div class="explanation" id="text-explanation">
+                Sto caricando la spiegazione...
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Math Logic for Fisher's Exact Test ---
+    function logGamma(z) {
+        const c = [
+            57.1562356658629235, -59.5979603554754912,
+            14.1360979747417471, -0.491913816097620199, .339946499848118887e-4,
+            .465236289270485756e-4, -.983744753048795646e-4, .158088703224912494e-3,
+            -.210264441724104883e-3, .217439618115212608e-3, -.164318106536763890e-3,
+            .844182239838527433e-4, -.261908384015814087e-4, .368991826595316234e-5
+        ];
+        let coef = 0.99999999999980993;
+        const g = 671.0 / 128.0;
+        let sum = 0;
+        for(let i=0; i < c.length; i++) sum += c[i] / (z + i + 1);
+        const term1 = (z + 0.5) * Math.log((z + g + 0.5));
+        const term2 = -(z + g + 0.5);
+        const term3 = Math.log(Math.sqrt(2 * Math.PI) * (coef + sum));
+        return term1 + term2 + term3;
+    }
+
+    function logFact(n) { return logGamma(n + 1); }
+
+    function logCombination(n, k) {
+        if (k < 0 || k > n) return -Infinity; 
+        return logFact(n) - logFact(k) - logFact(n - k);
+    }
+
+    function hypergeoPDF(k, N, K, n) {
+        const num = logCombination(K, k) + logCombination(N - K, n - k);
+        const den = logCombination(N, n);
+        return Math.exp(num - den);
+    }
+
+    function fisherTestOneSided(k, N, K, n) {
+        let pValue = 0;
+        const limit = Math.min(n, K);
+        if(limit - k > 5000) return 0; 
+        for (let x = k; x <= limit; x++) {
+            pValue += hypergeoPDF(x, N, K, n);
+        }
+        return Math.min(pValue, 1.0);
+    }
+
+    // --- UI Logic ---
+    const inputs = {
+        N: document.getElementById('input-N'),
+        K: document.getElementById('input-K'),
+        n: document.getElementById('input-n'),
+        k: document.getElementById('input-k')
+    };
+
+    const displays = {
+        N: document.getElementById('val-N'),
+        K: document.getElementById('val-K'),
+        n: document.getElementById('val-n'),
+        k: document.getElementById('val-k')
+    };
+
+    function update() {
+        // Parse Inputs
+        let N = parseInt(inputs.N.value);
+        let K = parseInt(inputs.K.value);
+        let n = parseInt(inputs.n.value);
+        let k = parseInt(inputs.k.value);
+
+        // Constraints
+        if (K > N) { inputs.K.value = N; K = N; }
+        if (n > N) { inputs.n.value = N; n = N; }
+        if (k > K) { inputs.k.value = K; k = K; }
+        if (k > n) { inputs.k.value = n; k = n; }
+        
+        // Update number displays
+        displays.N.textContent = N;
+        displays.K.textContent = K;
+        displays.n.textContent = n;
+        displays.k.textContent = k;
+
+        // Calc Stats
+        const pValue = fisherTestOneSided(k, N, K, n);
+        const expectedRatio = K / N; 
+        const observedRatio = k / n; 
+        const foldEnrichment = (observedRatio / expectedRatio) || 0;
+        
+        // Odds Ratio
+        const a = k;
+        const b = n - k;
+        const c = K - k;
+        const d = N - K - n + k;
+        const oddsRatio = (b*c) === 0 ? "Inf" : (a*d)/(b*c);
+
+        // UI Updates
+        updateResultBanner(pValue);
+        updateBarViz(expectedRatio, observedRatio);
+        updateStatsGrid(foldEnrichment, k, K, oddsRatio);
+        updateMatrixTable(k, n, K, N, d);
+        updateUrnText(N, K, n, expectedRatio);
+        updateSVG(N, K, n, k);
+        updateExplanation(foldEnrichment, pValue, k, expectedRatio, n);
+    }
+
+    function updateResultBanner(pValue) {
+        const pBox = document.getElementById('result-box');
+        const pText = document.getElementById('p-value-text');
+        const sigText = document.getElementById('significance-text');
+
+        if (pValue < 0.0001) pText.textContent = pValue.toExponential(2);
+        else pText.textContent = pValue.toFixed(4);
+
+        if (pValue < 0.05) {
+            pBox.className = 'p-value-display significant';
+            sigText.textContent = "Significativo (Arricchimento non casuale)";
+        } else {
+            pBox.className = 'p-value-display not-significant';
+            sigText.textContent = "Non Significativo (Potrebbe essere casuale)";
+        }
+    }
+
+    function updateBarViz(expectedRatio, observedRatio) {
+        document.getElementById('expected-ratio').textContent = (expectedRatio * 100).toFixed(2) + '%';
+        document.getElementById('bar-expected').style.width = Math.min((expectedRatio * 100), 100) + '%';
+        
+        document.getElementById('observed-ratio').textContent = (observedRatio * 100).toFixed(2) + '%';
+        document.getElementById('bar-observed').style.width = Math.min((observedRatio * 100), 100) + '%';
+    }
+
+    function updateStatsGrid(fold, k, K, odds) {
+        document.getElementById('fold-enrichment').textContent = fold.toFixed(2) + 'x';
+        document.getElementById('odds-ratio').textContent = typeof odds === 'number' ? odds.toFixed(2) : odds;
+    }
+
+    function updateMatrixTable(k, n, K, N, d) {
+        document.getElementById('cell-k').textContent = `k = ${k}`;
+        document.getElementById('cell-n-k').textContent = `n-k = ${n-k}`;
+        document.getElementById('cell-n').textContent = `n = ${n}`;
+        document.getElementById('cell-K-k').textContent = `K-k = ${K-k}`;
+        document.getElementById('cell-rest').textContent = `Resto = ${d}`;
+        document.getElementById('cell-N-n').textContent = `N-n = ${N-n}`;
+        document.getElementById('cell-K').textContent = `K = ${K}`;
+        document.getElementById('cell-N-K').textContent = `N-K = ${N-K}`;
+        document.getElementById('cell-N').textContent = `N = ${N}`;
+    }
+
+    function updateUrnText(N, K, n, expectedRatio) {
+        document.getElementById('txt-N').textContent = N;
+        document.getElementById('txt-K').textContent = K;
+        document.getElementById('txt-n').textContent = n;
+        const pct = (expectedRatio * 100).toFixed(2) + '%';
+        document.getElementById('txt-pct').textContent = pct;
+        document.getElementById('txt-pct2').textContent = pct;
+    }
+
+    function updateSVG(N, K, n, k) {
+        const svgW = 400;
+        const svgH = 300;
+        const centerY = 160;
+        
+        // Scale logic
+        const scale = Math.sqrt(20000); 
+        const rPath = Math.max(20, (Math.sqrt(K) / scale) * 250); 
+        const rDeg = Math.max(20, (Math.sqrt(n) / scale) * 250);
+
+        const cPath = document.getElementById('circle-pathway');
+        const cDeg = document.getElementById('circle-deg');
+        const lPath = document.getElementById('title-pathway');
+        const lDeg = document.getElementById('title-deg');
+
+        // IMPROVED DISTANCE CALCULATION
+        // Old logic had padding that hid small overlaps.
+        // New logic:
+        // Max distance = sum of radii (just touching)
+        // Min distance = difference of radii (one inside other)
+        
+        let dist;
+        if (k === 0) {
+            // Explicitly separate them with padding if overlap is 0
+            dist = rPath + rDeg + 30; 
+        } else {
+            // If k > 0, we interpolate strictly between Touching and Inside
+            const maxDist = rPath + rDeg; // Just touching
+            const minDist = Math.abs(rPath - rDeg); // Fully inside
+            
+            const minSet = Math.min(n, K);
+            // Overlap ratio relative to the smaller set size
+            // We use a sqrt scale for the ratio to make small overlaps "pop" more visually
+            const rawRatio = k / minSet;
+            
+            // Optional: sqrt the ratio so small k values move the circles faster
+            // const visualRatio = Math.sqrt(rawRatio); 
+            // Stick to linear for accuracy, but remove padding
+            
+            dist = maxDist - (maxDist - minDist) * rawRatio;
+            
+            // Safety: Ensure distance is slightly less than sum of radii if k > 0
+            // so stroke doesn't hide it
+            if (dist > (rPath + rDeg - 4)) {
+                dist = rPath + rDeg - 4;
+            }
+        }
+        
+        // Center the whole cluster
+        const totalW = dist;
+        const startX = (svgW - totalW) / 2;
+        
+        const cxPath = (svgW / 2) - (dist / 2);
+        const cxDeg = (svgW / 2) + (dist / 2);
+
+        // Apply attrs
+        cPath.setAttribute('r', rPath);
+        cPath.setAttribute('cx', cxPath);
+        cPath.setAttribute('cy', centerY);
+        
+        cDeg.setAttribute('r', rDeg);
+        cDeg.setAttribute('cx', cxDeg);
+        cDeg.setAttribute('cy', centerY);
+
+        // Update Labels
+        lPath.setAttribute('x', cxPath);
+        lPath.setAttribute('y', centerY - rPath - 10);
+        
+        lDeg.setAttribute('x', cxDeg);
+        lDeg.setAttribute('y', centerY + rDeg + 20);
+
+        // Intersection Labels
+        const txtKk = document.getElementById('label-K-k');
+        const txtk = document.getElementById('label-k');
+        const txtnk = document.getElementById('label-n-k');
+
+        txtk.textContent = k > 0 ? k : "";
+        txtKk.textContent = (K-k) > 0 ? (K-k) : "";
+        txtnk.textContent = (n-k) > 0 ? (n-k) : "";
+
+        txtk.setAttribute('x', (cxPath + cxDeg)/2);
+        txtKk.setAttribute('x', cxPath - (rPath/2));
+        txtnk.setAttribute('x', cxDeg + (rDeg/2));
+        
+        if(k === 0) txtk.textContent = "";
+    }
+
+    function updateExplanation(fold, pValue, k, expectedRatio, n) {
+        const explanationBox = document.getElementById('text-explanation');
+        let expl = `<strong>Analisi Guidata:</strong> `;
+        
+        if (fold > 1.5 && pValue < 0.05) {
+            expl += `Hai trovato <strong>${k}</strong> geni comuni. In un'estrazione casuale (vedi analogia Urna) ce ne aspettavamo solo <strong>${(expectedRatio * n).toFixed(1)}</strong>.<br>
+            Il P-value (${pValue < 0.001 ? '<0.001' : pValue.toFixed(4)}) conferma che questa abbondanza è troppo alta per essere un caso.`;
+        } else if (fold > 1 && pValue >= 0.05) {
+            expl += `C'è un leggero eccesso di geni (${k} osservati vs ${(expectedRatio * n).toFixed(1)} attesi), ma <strong>non è statisticamente significativo</strong>.<br>
+            È come lanciare una moneta 5 volte e ottenere 3 teste: è più del 50%, ma non basta per dire che la moneta è truccata.`;
+        } else {
+            expl += `Non c'è arricchimento. La proporzione di geni del pathway nella tua lista (${(k/n*100).toFixed(1)}%) è simile o inferiore a quella globale (${(expectedRatio*100).toFixed(1)}%).`;
+        }
+        explanationBox.innerHTML = expl;
+    }
+
+    // Listeners
+    Object.values(inputs).forEach(input => {
+        input.addEventListener('input', update);
+    });
+
+    // Init
+    update();
+
+</script>
+
+</body>
+</html>
